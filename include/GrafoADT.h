@@ -111,7 +111,7 @@ public:
   }
 
   //Dos formas de eliminar aristas segun el contexto
-  void removeArista(cost Arista<TipoVertice, TipoPeso>& e) override {
+  void removeArista(const Arista<TipoVertice, TipoPeso>& e) override {
     removeAristaWV(e.origen, e.destino);
   }
 
@@ -302,7 +302,7 @@ public:
   int getNumAristas() const override {
     return numAristas;
   }
-}
+};
   
 
  
