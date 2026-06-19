@@ -1,3 +1,6 @@
+#ifndef GRAFOADT_H
+#define GRAFOADT_H
+
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -303,9 +306,5 @@ public:
     return numAristas;
   }
 };
-  
 
- 
- 
-  
-  
+#endif
