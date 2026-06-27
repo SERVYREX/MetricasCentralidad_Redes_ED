@@ -149,6 +149,7 @@ public:
   }
   
   void addArista(const TipoVertice& v, const TipoVertice& u, TipoPeso peso) override {
+    if(sonAdyacentes(v,u)) return; // Evitamos duplicados
     //Comprobamos que los vertices esten en el grafo, en caso contrario los agregamos
     addVertice(v);
     addVertice(u);
@@ -271,6 +272,9 @@ public:
 
   //Comprobamos que el vertice exista y devolvemos el tamaño de la lista asociada a v
   int getGrado(const TipoVertice& v) const override {
+    if(dirigido){
+      return getOutGrado(v) + getInGrado(v);
+    }
     auto it = listaAdyacencia.find(v);
 
     if(it == listaAdyacencia.end()) return 0;
@@ -279,7 +283,11 @@ public:
   }
 
   int getOutGrado(const TipoVertice& v) const override {
-    return getGrado(v);
+    auto it = listaAdyacencia.find(v);
+
+    if(it == listaAdyacencia.end()) return 0;
+
+    return it->second.size();
   }
 
   //Comprobamos que la cantidad de aristas que tienen como destino v
@@ -290,8 +298,8 @@ public:
 
     for(const auto& par : listaAdyacencia){
       for(const auto& arista : par.second) {
-	if(arista.destino == v)
-	  grado++;
+	  if(arista.destino == v)
+	    grado++;
       }
     }
     return grado;

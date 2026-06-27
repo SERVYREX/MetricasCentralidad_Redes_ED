@@ -1,7 +1,7 @@
 #ifndef LEERDATASET_H
 #define LEERDATASET_H
 
-#include "../include/GrafoADT.h"
+#include "GrafoADT.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -11,7 +11,7 @@
 class grafoProteinas
 {
 private:
-    GrafoAdList<std::string, int> grafoP; // grafo no dirigido
+    GrafoAdList<std::string, float> grafoP; // grafo no dirigido
 public:
     grafoProteinas() : grafoP(false) {} // constructor que inicializa el grafo como no dirigido
     void leerArchivoProteinas(){
@@ -29,7 +29,7 @@ public:
 
         archivo.close();
     }
-    GrafoAdList<std::string, int> getGrafoP() const{
+    GrafoAdList<std::string, float> getGrafoP() const{
         return grafoP;
     }
 };
