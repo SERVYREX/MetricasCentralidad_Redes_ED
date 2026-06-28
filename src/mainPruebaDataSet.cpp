@@ -11,7 +11,7 @@ int main(){
   grafoProteinas.leerArchivoProteinas();
   grafoRedes grafoRedes; // grafo dirigido
   grafoRedes.leerArchivoRedes();
-  resultado = metricas.centralidadPercolacion(grafoRedes.getGrafoR(),grafoRedes.getGrafoR().getEstados());
+  resultado = metricas.centralidadCercania(grafoProteinas.getGrafoP());
   
   float contador = 0;
   int contador2 = 0;

@@ -16,15 +16,14 @@ public:
     grafoProteinas() : grafoP(false) {} // constructor que inicializa el grafo como no dirigido
     void leerArchivoProteinas(){
         std::ifstream archivo("../DATA/yeast.edgelist");
-
+	
         if (!archivo.is_open()){
             return;
         }
-
+	int peso;
         std::string vertice1, vertice2;
-        while (archivo >> vertice1 >> vertice2){ // lee de 2 en 2 palabras
-            grafoP.addArista(vertice1, vertice2, 1); // Asignamos un peso de 1 a cada arista, ya que estos no tienen en el archivo
-            //std::cout << "Agregada arista: " << vertice1 << " - " << vertice2 << std::endl;
+        while (archivo >> vertice1 >> vertice2 >> peso){ // lee de 2 en 2 palabras
+            grafoP.addArista(vertice1, vertice2, peso);
         }
 
         archivo.close();

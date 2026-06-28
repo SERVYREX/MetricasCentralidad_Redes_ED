@@ -7,6 +7,7 @@
 #include <map>
 #include <unordered_map>
 #include <limits>
+#include <iostream>
 
 template <typename TipoVertice, typename TipoPeso = int>
 class Centralidad {
@@ -112,11 +113,6 @@ public:
         std::unordered_map<TipoVertice, TipoPeso> distancias;
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
 
-        // Se asigna distancia infinita a todos los nodos
-        for (const auto& v : g.getVertices()) {
-            distancias[v] = INFINITO;
-        }
-
         // Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
         std::priority_queue<
             std::pair<TipoPeso, TipoVertice>, 
@@ -139,12 +135,17 @@ public:
             for (const auto& arista : g.aristaIncidentes(u)) {
                 TipoVertice v = arista.destino;
                 TipoPeso pesoArista = arista.peso;
-                if (distancias[u] + pesoArista < distancias[v]) {
-                    distancias[v] = distancias[u] + pesoArista;
-                    pq.push({distancias[v], v});
-                }
-            }
+
+	      
+		auto itV = distancias.find(v);
+		if (itV == distancias.end() || distancias[u] + pesoArista < itV->second) {
+		  distancias[v] = distancias[u] + pesoArista;
+		  pq.push({distancias[v], v});
+		}
+	    }
+	    
         }
+	std::cout<< "hola" << std::endl;
         return distancias;
     }
 	
@@ -155,6 +156,10 @@ public:
         int V = vertices.size();
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
         int cont = 0;
+
+	for (const auto& v : vertices) {
+	  closeness[v] = -1.0;
+	}
         
         // Ciclo para iterar sobre todos los vértices
         for (const auto& v : vertices) {
@@ -169,14 +174,19 @@ public:
                 // Si un nodo no fue alcanzado (Distancia infinita) rompe el ciclo
                 // Búsqueda en O(1)
                 auto it = distancias.find(u);
-                if (it == distancias.end() || it->second == INFINITO) {
+                if (it == distancias.end()) {
                     alcanzableTodo = false; 
                     break;
                 }
          
                 sumaDistancias += static_cast<float>(distancias[u]);
             }
-
+	    
+	    // Teoricamente, si en un grafo no dirigido un nodo no puede alcanzar a otro, todos los nodos conectados a este tampoco podrán, por lo que se puede simplificar la ejecución de la métrica si ocurre este caso
+	    if(!alcanzableTodo && !g.esDirigido()){
+	      return closeness;
+	    }
+	    
             // Verifica que el vértice alcance a todos los demás, si no lo hace, esta métrica asigna un valor 0 de importancia a ese nodo
             if (alcanzableTodo && sumaDistancias > 0) {
                 // Asigna al vértice su valor de importancia, utilizando la fórmula normalizada
@@ -207,7 +217,7 @@ public:
                 if (u == v) continue;
                 // Si un nodo no fue alcanzado, es ignorado (suma 0), a diferencia de la centralidad por cercanía
                 auto it = distancias.find(u);
-                if (it != distancias.end() && it->second != INFINITO) {
+                if (it != distancias.end()){
                     sumaInversa += 1.0 / static_cast<float>(it->second);
                 }
             }
@@ -237,7 +247,7 @@ public:
                 if (u == v) continue;
                 
                 auto it = distancias.find(u);
-                if (it == distancias.end() || it->second == INFINITO) {
+                if (it == distancias.end()) {
                     return -1;
                 }
                 
