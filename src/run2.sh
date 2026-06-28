@@ -1,11 +1,32 @@
 #!/bin/bash
 
-# Nombre del archivo donde se guardarán los datos
-CSV="Tiempos_Ejecucion_Redes.csv"
+ITERACIONES=6
+
+CSV1="tiempos_originalRedes.csv"
+CSV2="tiempos_modificadoRedes.csv"
+
+# Cabeceras
+echo "Iteracion;degree;closeness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV1"
+echo "Iteracion;degree;closeness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV2"
 
 
-# 1. Crear el archivo e inyectar las cabeceras (el '>' sobrescribe si el archivo ya existía)
-echo "Iteracion;degree;closseness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV"
+./redes "$ITERACIONES" | awk \
+-v csv1="$CSV1" \
+-v csv2="$CSV2" '
 
-# 2. Ejecutar el programa, limpiar el último ';' y añadir los datos al archivo (usamos '>>' para no borrar la cabecera)
-./redes  | tee /dev/tty | grep '^[0-9]' | sed 's/;$//' >> "$CSV"
+/^V1$/ {
+    archivo = csv1
+    next
+}
+
+/^V2$/ {
+    archivo = csv2
+    next
+}
+
+/^[0-9]+;/ {
+    sub(/;$/, "")
+    print >> archivo
+}
+
+'

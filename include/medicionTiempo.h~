@@ -1,0 +1,30 @@
+#ifndef MEDICION_TIEMPO_H
+#define MEDICION_TIMEPO_H
+
+
+#include <iostream>
+#include <chrono>
+#include "../include/leerDataSet.h"
+#include "../include/Metricas.h"
+using namespace std;
+
+void showInformation(const std::map<string,float>& mapa, string tipoMetrica){
+  for(const auto& par : mapa){
+    cout << "Nodo: " << par.first <<", " << tipoMetrica << par.second <<endl;
+  }
+}
+
+template<typename Funcion>
+auto medirTiempo(const string & nombreMetrica,Funcion f){
+    
+  auto start = chrono::high_resolution_clock::now();
+  auto resultado = f();
+  auto end = chrono::high_resolution_clock::now();
+
+  // Calculamos el tiempo transcurrido
+  double running_time = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+  running_time *= 1e-9;
+  cout << "Tiempo Ejecucion " << nombreMetrica << running_time << " segundos" << endl;
+    return resultado;
+    }
+#endif

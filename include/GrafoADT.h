@@ -57,6 +57,8 @@ public:
   //Para grafos dirigidos
   virtual int getInGrado(const TipoVertice& v) const = 0;
   virtual int getOutGrado(const TipoVertice& v) const = 0;
+  //Metodo para obtener el coste en memoria del grafo
+  virtual size_t memoriaUsada() const = 0;
 };
 
 // Implementacion basada en Listas de adyacencia
@@ -72,9 +74,52 @@ private:
   std::unordered_map<TipoVertice, double> estados; // Mapa que permite verificar el estado de un nodo para la metrica de percolación
 
 public:
+  
   GrafoAdList(bool esDirigido = false){
     this->dirigido = esDirigido;
   }
+
+  size_t memoriaUsada() const override {
+
+    size_t memoria = sizeof(*this);
+
+    // Memoria de la lista de adyacencia
+    for (const auto& par : listaAdyacencia) {
+
+        // Clave (vértice)
+        memoria += sizeof(par.first);
+
+        // Si el vértice es string, sumamos sus caracteres
+        if constexpr (std::is_same_v<TipoVertice, std::string>) {
+            memoria += par.first.capacity();
+        }
+
+        // Objeto vector
+        memoria += sizeof(par.second);
+
+        // Memoria reservada por el vector
+        memoria += par.second.capacity() *
+                   sizeof(Arista<TipoVertice,TipoPeso>);
+    }
+
+    // Memoria del mapa de estados
+    memoria += sizeof(estados);
+
+    for (const auto& par : estados) {
+
+        memoria += sizeof(par.first);
+
+        if constexpr (std::is_same_v<TipoVertice, std::string>) {
+            memoria += par.first.capacity();
+        }
+
+        memoria += sizeof(par.second);
+    }
+
+    return memoria;
+}
+
+  
   bool esDirigido() const override {
     return dirigido;
   }

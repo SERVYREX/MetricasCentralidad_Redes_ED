@@ -1,80 +1,182 @@
 #include <iostream>
+#include <fstream>
 #include <chrono>
+#include <cstdlib>
 #include "../include/leerDataSet.h"
 #include "../include/Metricas.h"
 #include "../include/metricasUtils.h"
+
 using namespace std;
 
+int main(int argc, char* argv[]) {
 
-int main(void){
-  //Varibles y mapas para los resultados
-  float ASPathResult;
-  map<string,float> degreeResult;
-  map<string,float> clossenessResult;
-  map<string,float> harmonicResult;
-  map<string,float> betweennessResult;
-  map<string,float> percolationResult;
-  map<string,float> pagerankResult;
+    int repeticiones = 1;
 
-  //Instancias para metricas
-  Centralidad<string,float> metricas;
-  
-  //Instancias del grafo
-  grafoRedes grafoRedes;
-  grafoRedes.leerArchivoRedes();
-  //Lectura de dataset
-  cout << "Tiempo construccion grafo redes: ";
-  int aux = medirTiempo("Tiempo construccion grafo redes: ", [&]() {
-    return grafoRedes.leerArchivoRedes();
-  });
- 
-  cout <<" Segundos" <<endl;
-    cout << "Memoria usada por Grafo Redes: " << grafoRedes.getGrafoR().memoriaUsada() << " bytes\n" << endl;
-  for(int i = 0 ; i<100; i++){
-    cout<< i << ";" << flush;
-    degreeResult = medirTiempo("Centralidad Grado: ",[&]() {
-      return metricas.centralidadGrado(grafoRedes.getGrafoR());
-    });
+    if (argc > 1) {
+        repeticiones = atoi(argv[1]);
 
-    clossenessResult = medirTiempo("Centralidad Cercania: ",[&]() {
-      return metricas.centralidadCercania(grafoRedes.getGrafoR());
-    });
+        if (repeticiones <= 0) {
+            cerr << "Uso: " << argv[0] << " <numero_repeticiones>" << endl;
+            return 1;
+        }
+    }
 
-    harmonicResult = medirTiempo("Centralidad Armonica: ",[&]() {
-      return metricas.centralidadArmonica(grafoRedes.getGrafoR());
-    });
+    float ASPathResult;
 
-    ASPathResult = medirTiempo("Centralidad Camino Promedio: ",[&]() {
-      return metricas.caminoPromedio(grafoRedes.getGrafoR());
-    });
+    map<string,float> degreeResult;
+    map<string,float> clossenessResult;
+    map<string,float> harmonicResult;
+    map<string,float> betweennessResult;
+    map<string,float> percolationResult;
+    map<string,float> pagerankResult;
 
-    betweennessResult = medirTiempo("Centralidad Intermediacion: ",[&]() {
-      return metricas.centralidadIntermediacion(grafoRedes.getGrafoR());
-    });
 
-    percolationResult = medirTiempo("Centralidad Percolacion: ",[&]() {
-      return metricas.centralidadPercolacion(
-					     grafoRedes.getGrafoR(),
-					     grafoRedes.getGrafoR().getEstados()
-					     );
-    });
+    Centralidad<string,float> metricas;
 
-    pagerankResult = medirTiempo("Centralidad PageRank: ",[&]() {
-      return metricas.pageRank(grafoRedes.getGrafoR());
-    });
 
-    cout << endl;
-  }
-  // Mostramos los resultados de las metricas
+    grafoRedes lectorRedes;
+    GrafoAdList<string, float> grafoR(false);
 
-  // showInformation(degreeResult, "Centralidad Grado");
-  // showInformation(clossenessResult, "Centralidad Cercania");
-  //showInformation(harmonicResult, "Centralidad Armonica");
-  //cout << "Average Shortest Path: " << ASPathResult << endl;
-  //showInformation(betweennessResult, "Centralidad Intermediacion");
-  //showInformation(percolationResult, "Centralidad Percolacion");
-  //showInformation(pagerankResult, "PageRank");
-  
+    //Medimos y mostramos los datos de interes del grafo
+    cerr << "Tiempo construccion grafo redes: ";
+
+    auto start_grafo = chrono::high_resolution_clock::now();
+    
+    int aux = lectorRedes.leerArchivoRedes(grafoR);
+    
+    auto end_grafo = chrono::high_resolution_clock::now();
+    double tiempo_grafo = chrono::duration_cast<chrono::nanoseconds>(end_grafo - start_grafo).count() * 1e-9;
+
+    cerr << tiempo_grafo << " Segundos" << endl;
+
+    cerr << "Memoria usada por Grafo Redes: " 
+         << grafoR.memoriaUsada() << " bytes\n" << endl;
+
+
+    //Primera iteracion de las metricas sobre el grafo
+
+    cerr << "Procesando Metricas Iniciales..." << endl;
+    
+   
+    cout << "V1" << endl; 
+
+    for (int i = 0; i < repeticiones; i++) {
+        
+        
+        cout << i + 1 << ";";
+
+        degreeResult = medirTiempo("", [&]() {
+            return metricas.centralidadGrado(grafoR);
+        });
+
+        clossenessResult = medirTiempo("", [&]() {
+            return metricas.centralidadCercania(grafoR);
+        });
+
+        harmonicResult = medirTiempo("", [&]() {
+            return metricas.centralidadArmonica(grafoR);
+        });
+
+        ASPathResult = medirTiempo("", [&]() {
+            return metricas.caminoPromedio(grafoR);
+        });
+
+        betweennessResult = medirTiempo("", [&]() {
+            return metricas.centralidadIntermediacion(grafoR);
+        });
+
+        percolationResult = medirTiempo("", [&]() {
+            return metricas.centralidadPercolacion(
+                grafoR,
+                grafoR.getEstados()
+            );
+        });
+
+        pagerankResult = medirTiempo("", [&]() {
+            return metricas.pageRank(grafoR);
+        });
+        
+        cout << endl;
+    }
+
+    //Exportamos los mapas a formato csv para posterior analisis y mostramos el valor de ASP
+    cerr<<endl;
+    cerr<< "Average Shortest Path: " <<ASPathResult << endl;
+    exportarCSV(degreeResult, "../ResultadosR/DegreeResultV1.csv");
+    exportarCSV(clossenessResult, "../ResultadosR/Centralidad CercaniaV1.csv");
+    exportarCSV(harmonicResult, "../ResultadosR/Centralidad ArmonicaV1.csv");
+    exportarCSV(betweennessResult, "../ResultadosR/Centralidad IntermediacionV1.csv");
+    exportarCSV(percolationResult, "../ResultadosR/Centralidad PercolacionV1.csv");
+    exportarCSV(pagerankResult, "../ResultadosR/PageRankV1.csv");
+
+
+
+    //Eliminamos los vertices y por consecuente las aristas mas importantes reportadas por las metrcias Degree,Betweenness y harmonic
+
+    eliminarAristas(degreeResult, grafoR);
+    eliminarAristas(betweennessResult, grafoR);
+    eliminarAristas(harmonicResult, grafoR);
+
+
+    cerr << endl;
+    
+
+    //Segunda medicion una vez quitadas las aristas
+
+    cerr << "Eliminando aristas y vertices clave. Reprocesando..." << endl;
+    
+    cout << "V2" << endl;
+
+    for (int i = 0; i < repeticiones; i++) {
+        
+        cout << i + 1 << ";";
+
+        degreeResult = medirTiempo("", [&]() {
+            return metricas.centralidadGrado(grafoR);
+        });
+
+        clossenessResult = medirTiempo("", [&]() {
+            return metricas.centralidadCercania(grafoR);
+        });
+
+        harmonicResult = medirTiempo("", [&]() {
+            return metricas.centralidadArmonica(grafoR);
+        });
+
+        ASPathResult = medirTiempo("", [&]() {
+            return metricas.caminoPromedio(grafoR);
+        });
+
+        betweennessResult = medirTiempo("", [&]() {
+            return metricas.centralidadIntermediacion(grafoR);
+        });
+
+        percolationResult = medirTiempo("", [&]() {
+            return metricas.centralidadPercolacion(
+                grafoR,
+                grafoR.getEstados()
+            );
+        });
+
+        pagerankResult = medirTiempo("", [&]() {
+            return metricas.pageRank(grafoR);
+        });
+        
+        cout << endl;
+    }
+
+
+    //Finalmente exportamos los resultados luego de la eliminacion y mostramos el valor del ASP
+    cerr<<endl;
+    cerr<< "Average Shortest Path: " <<ASPathResult << endl;
+    exportarCSV(degreeResult, "../ResultadosRV2/DegreeResultV2.csv");
+    exportarCSV(clossenessResult, "../ResultadosRV2/Centralidad CercaniaV2.csv");
+    exportarCSV(harmonicResult, "../ResultadosRV2/Centralidad ArmonicaV2.csv");
+    exportarCSV(betweennessResult, "../ResultadosRV2/Centralidad IntermediacionV2.csv");
+    exportarCSV(percolationResult, "../ResultadosRV2/Centralidad PercolacionV2.csv");
+    exportarCSV(pagerankResult, "../ResultadosRV2/PageRankV2.csv");
+
+    cerr<<endl;
+    cerr << "Proceso Finalizado" << endl;
+    return 0;
 }
- 
-  

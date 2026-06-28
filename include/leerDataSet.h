@@ -10,40 +10,32 @@
 
 class grafoProteinas
 {
-private:
-    GrafoAdList<std::string, float> grafoP; // grafo no dirigido
 public:
-    grafoProteinas() : grafoP(false) {} // constructor que inicializa el grafo como no dirigido
-    void leerArchivoProteinas(){
+    int leerArchivoProteinas(GrafoAdList<std::string, float>& grafoP){
         std::ifstream archivo("../DATA/yeast.edgelist");
-	
+
         if (!archivo.is_open()){
-            return;
+            return 1;
         }
-	int peso;
+
+        int peso;
         std::string vertice1, vertice2;
         while (archivo >> vertice1 >> vertice2 >> peso){ // lee de 2 en 2 palabras
             grafoP.addArista(vertice1, vertice2, peso);
         }
 
         archivo.close();
-    }
-    GrafoAdList<std::string, float> getGrafoP() const{
-        return grafoP;
+        return 0;
     }
 };
 
 class grafoRedes{
-private:
-    GrafoAdList<std::string, float> grafoR;
-
 public:
-    grafoRedes() : grafoR(true) {} // constructor que inicializa el grado como dirigido
-    void leerArchivoRedes(){
+    int leerArchivoRedes(GrafoAdList<std::string, float>& grafoR){
         std::ifstream archivo2("../DATA/train_test_network.csv");
 
         if (!archivo2.is_open()){
-            return;
+            return 1;
         }
 
         std::string linea;
@@ -77,11 +69,9 @@ public:
             grafoR.addArista(nodo1, nodo2, peso);
             //std::cout << "Agregada arista: " << nodo1 << " -> " << nodo2 << " con peso: " << peso << std::endl;
         }
-    }
 
-    GrafoAdList<std::string, float> getGrafoR() const
-    {
-        return grafoR;
+        archivo2.close();
+        return 0;
     }
 };
 

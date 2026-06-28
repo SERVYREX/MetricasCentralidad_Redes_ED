@@ -145,7 +145,6 @@ public:
 	    }
 	    
         }
-	std::cout<< "hola" << std::endl;
         return distancias;
     }
 	
@@ -155,7 +154,6 @@ public:
         auto vertices = g.getVertices();
         int V = vertices.size();
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
-        int cont = 0;
 
 	for (const auto& v : vertices) {
 	  closeness[v] = -1.0;
@@ -194,7 +192,6 @@ public:
             } else {
                 closeness[v] = -1.0;
             }
-            cont++;
         }
         return closeness;
     }

@@ -1,11 +1,32 @@
 #!/bin/bash
 
-# Nombre del archivo donde se guardarán los datos
-CSV="tiempos_ejecucion_Proteinas.csv"
+ITERACIONES=1
+
+CSV1="tiempos_originalProteinas.csv"
+CSV2="tiempos_modificadoProteinas.csv"
+
+# Cabeceras
+echo "Iteracion;degree;closeness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV1"
+echo "Iteracion;degree;closeness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV2"
 
 
-# 1. Crear el archivo e inyectar las cabeceras (el '>' sobrescribe si el archivo ya existía)
-echo "Iteracion;degree;closseness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV"
+./proteinas "$ITERACIONES" | awk \
+-v csv1="$CSV1" \
+-v csv2="$CSV2" '
 
-# 2. Ejecutar el programa, limpiar el último ';' y añadir los datos al archivo (usamos '>>' para no borrar la cabecera)
-./proteinas | tee /dev/tty | grep '^[0-9]' | sed 's/;$//' >> "$CSV"
+/^V1$/ {
+    archivo = csv1
+    next
+}
+
+/^V2$/ {
+    archivo = csv2
+    next
+}
+
+/^[0-9]+;/ {
+    sub(/;$/, "")
+    print >> archivo
+}
+
+'
