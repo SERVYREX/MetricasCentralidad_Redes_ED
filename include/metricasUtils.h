@@ -88,4 +88,32 @@ void eliminarAristas(const std::map<string, float>& mapa,
     }
 }
 
+void agregarAristas(const std::map<string, float>& mapa,
+                   GrafoAdList<string, float>& g) {
+
+    // Copiamos los pares del mapa a un vector
+    vector<pair<string, float>> nodosOrdenados(mapa.begin(), mapa.end());
+
+    // Ordenamos los pares de modo que los nodos mas aislados queden al inicio
+    sort(nodosOrdenados.begin(), nodosOrdenados.end(),
+        [](const pair<string, float>& a, const pair<string, float>& b) {
+            return a.second < b.second; 
+        });
+
+    // Conectamos los 20 nodos objetivo entre sí
+    for (int i = 0; i < 20; ++i) {
+        string nodoOrigen = nodosOrdenados[i].first;
+
+        for (int j = i + 1; j < 20; ++j) {
+            string nodoDestino = nodosOrdenados[j].first;
+
+            // Evitamos agregar aristas duplicadas
+            if (!g.sonAdyacentes(nodoOrigen, nodoDestino)) {
+                // Se asume un peso de 1.0 para la nueva arista
+                g.addArista(nodoOrigen, nodoDestino, 1.0); 
+            }
+        }
+    }
+}
+
 #endif

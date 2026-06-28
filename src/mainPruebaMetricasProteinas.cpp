@@ -11,10 +11,10 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
     int repeticiones = 1;
-
-    if (argc > 1) {
+    int experimento = 0;
+    if (argc > 2) {
         repeticiones = atoi(argv[1]);
-
+	experimento = atoi(argv[2]);
         if (repeticiones <= 0) {
             cerr << "Uso: " << argv[0] << " <numero_repeticiones>" << endl;
             return 1;
@@ -110,20 +110,29 @@ int main(int argc, char* argv[]) {
     exportarCSV(pagerankResult, "../ResultadosP/PageRankV1.csv");
 
 
-
+  //Ejecutamos el experimento correspondiente
+    
+    if(experimento == 0) {
     //Eliminamos los vertices y por consecuente las aristas mas importantes reportadas por las metrcias Degree,Betweenness y harmonic
-
+      
+    cerr << "Eliminando aristas y vertices clave. Reprocesando..." << endl;
     eliminarAristas(degreeResult, grafoP);
     eliminarAristas(betweennessResult, grafoP);
     eliminarAristas(harmonicResult, grafoP);
+    }
+    else{
+      //En caso contrario agregamos aristas entre los nodos con menor valor del closseness
+      cerr<< "Agregando aristas en puntos clave..."<< endl;
+      agregarAristas(clossenessResult,grafoP);
+    }
+
 
 
     cerr << endl;
     
 
-    //Segunda medicion una vez quitadas las aristas
 
-    cerr << "Eliminando aristas y vertices clave. Reprocesando..." << endl;
+
     
     cout << "V2" << endl;
 
