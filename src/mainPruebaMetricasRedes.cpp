@@ -1,13 +1,9 @@
 #include <iostream>
+#include <chrono>
 #include "../include/leerDataSet.h"
 #include "../include/Metricas.h"
+#include "../include/metricasUtils.h"
 using namespace std;
-
-void showInformation(const std::map<string,float>& mapa, string tipoMetrica){
-  for(const auto& par : mapa){
-    cout << "Nodo: " << par.first <<", " << tipoMetrica << par.second <<endl;
-  }
-}
 
 
 int main(void){
@@ -23,32 +19,62 @@ int main(void){
   //Instancias para metricas
   Centralidad<string,float> metricas;
   
-  //Instancias de grafos
-  grafoProteinas grafoProteinas;
+  //Instancias del grafo
   grafoRedes grafoRedes;
-
-  //Lectura de datasets
-  grafoProteinas.leerArchivoProteinas();
   grafoRedes.leerArchivoRedes();
+  //Lectura de dataset
+  cout << "Tiempo construccion grafo redes: ";
+  int aux = medirTiempo("Tiempo construccion grafo redes: ", [&]() {
+    return grafoRedes.leerArchivoRedes();
+  });
+ 
+  cout <<" Segundos" <<endl;
+    cout << "Memoria usada por Grafo Redes: " << grafoRedes.getGrafoR().memoriaUsada() << " bytes\n" << endl;
+  for(int i = 0 ; i<100; i++){
+    cout<< i << ";" << flush;
+    degreeResult = medirTiempo("Centralidad Grado: ",[&]() {
+      return metricas.centralidadGrado(grafoRedes.getGrafoR());
+    });
 
-  //Metricas para GrafoRedes
-  degreeResult = metricas.centralidadGrado(grafoRedes.getGrafoR());
-  clossenessResult = metricas.centralidadCercania(grafoRedes.getGrafoR());
-  harmonicResult = metricas.centralidadArmonica(grafoRedes.getGrafoR());
-  ASPathResult = metricas.caminoPromedio(grafoRedes.getGrafoR());
-  betweennessResult = metricas.centralidadIntermediacion(grafoRedes.getGrafoR());
-  percolationResult = metricas.centralidadPercolacion(grafoRedes.getGrafoR(),grafoRedes.getGrafoR().getEstados());
-  pagerankResult = metricas.pageRank(grafoRedes.getGrafoR());
+    clossenessResult = medirTiempo("Centralidad Cercania: ",[&]() {
+      return metricas.centralidadCercania(grafoRedes.getGrafoR());
+    });
 
+    harmonicResult = medirTiempo("Centralidad Armonica: ",[&]() {
+      return metricas.centralidadArmonica(grafoRedes.getGrafoR());
+    });
+
+    ASPathResult = medirTiempo("Centralidad Camino Promedio: ",[&]() {
+      return metricas.caminoPromedio(grafoRedes.getGrafoR());
+    });
+
+    betweennessResult = medirTiempo("Centralidad Intermediacion: ",[&]() {
+      return metricas.centralidadIntermediacion(grafoRedes.getGrafoR());
+    });
+
+    percolationResult = medirTiempo("Centralidad Percolacion: ",[&]() {
+      return metricas.centralidadPercolacion(
+					     grafoRedes.getGrafoR(),
+					     grafoRedes.getGrafoR().getEstados()
+					     );
+    });
+
+    pagerankResult = medirTiempo("Centralidad PageRank: ",[&]() {
+      return metricas.pageRank(grafoRedes.getGrafoR());
+    });
+
+    cout << endl;
+  }
   // Mostramos los resultados de las metricas
 
-  showInformation(degreeResult, "Centralidad Grado");
-  showInformation(clossenessResult, "Centralidad Cercania");
-  showInformation(harmonicResult, "Centralidad Armonica");
-  cout << "Average Shortest Path: " << ASPathResult << endl;
-  showInformation(betweennessResult, "Centralidad Intermediacion");
-  showInformation(percolationResult, "Centralidad Percolacion");
-  showInformation(pagerankResult, "PageRank");
+  // showInformation(degreeResult, "Centralidad Grado");
+  // showInformation(clossenessResult, "Centralidad Cercania");
+  //showInformation(harmonicResult, "Centralidad Armonica");
+  //cout << "Average Shortest Path: " << ASPathResult << endl;
+  //showInformation(betweennessResult, "Centralidad Intermediacion");
+  //showInformation(percolationResult, "Centralidad Percolacion");
+  //showInformation(pagerankResult, "PageRank");
+  
 }
  
   

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Nombre del archivo donde se guardarán los datos
+CSV="Tiempos_Ejecucion_Redes.csv"
+
+
+# 1. Crear el archivo e inyectar las cabeceras (el '>' sobrescribe si el archivo ya existía)
+echo "Iteracion;degree;closseness;harmonic;ASP;betweenness;percolation;pagerank" > "$CSV"
+
+# 2. Ejecutar el programa, limpiar el último ';' y añadir los datos al archivo (usamos '>>' para no borrar la cabecera)
+./redes | sed 's/;$//' >> "$CSV"
