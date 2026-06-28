@@ -5,10 +5,79 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <unordered_map>
 #include <limits>
 
 template <typename TipoVertice, typename TipoPeso = int>
 class Centralidad {
+private:
+    // Función auxiliar común para el algoritmo de Brandes usado en intermediación y percolación
+    static void calcularDependenciasBrandes(
+        const Grafo<TipoVertice, TipoPeso>& g,
+        const TipoVertice& s,
+        std::vector<TipoVertice>& S,
+        std::unordered_map<TipoVertice, std::vector<TipoVertice>>& predecesores,
+        std::unordered_map<TipoVertice, int>& sigma,
+        std::unordered_map<TipoVertice, TipoPeso>& distancias
+    ) {
+        auto vertices = g.getVertices();
+        TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
+
+        // Se asigna distancia infinita y 0 caminos a todos los nodos
+        for (const auto& v : vertices) {
+            sigma[v] = 0;
+            distancias[v] = INFINITO;
+            predecesores[v].clear();
+        }
+
+        // Inicializa el nodo de partida
+        distancias[s] = 0;
+        sigma[s] = 1;
+
+        // Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
+        std::priority_queue<
+            std::pair<TipoPeso, TipoVertice>, 
+            std::vector<std::pair<TipoPeso, TipoVertice>>, 
+            ComparadorDijkstra
+        > pq;
+        pq.push({0, s});
+
+        // Bucle principal para el cálculo de caminos mínimos
+        while (!pq.empty()) {
+            // Selecciona el nodo con la menor distancia dentro de la cola
+            TipoPeso distActual = pq.top().first;
+            TipoVertice u = pq.top().second;
+            pq.pop();
+
+            if (distActual > distancias[u]) continue;
+
+            // Guarda el vértice en la lista para el proceso de acumulación posterior
+            S.push_back(u);
+
+            // Actualiza las distancias de los vecinos del nodo, comprobando que sea menor a la ya tiene registrada
+            for (const auto& arista : g.aristaIncidentes(u)) {
+                TipoVertice v = arista.destino;
+                TipoPeso pesoArista = arista.peso;
+
+                // Encuentra una ruta más corta hacia el destino 'v'
+                if (distancias[u] + pesoArista < distancias[v]) {
+                    distancias[v] = distancias[u] + pesoArista;
+                    pq.push({distancias[v], v});
+
+                    // Reinicia los predecesores conocidos y hereda la cantidad de caminos de 'u'
+                    predecesores[v].clear();
+                    predecesores[v].push_back(u);
+                    sigma[v] = sigma[u];
+                }
+                // Encuentra un camino alternativo que empata en costo con la distancia registrada
+                else if (distancias[u] + pesoArista == distancias[v]) {
+                    predecesores[v].push_back(u);
+                    sigma[v] += sigma[u]; 
+                }
+            }
+        }
+    }
+
 public:
     // Estructura auxiliar para la cola de prioridad de Dijkstra
     struct ComparadorDijkstra {
@@ -39,16 +108,16 @@ public:
     }
 
     // Algoritmo de Dijkstra para calcular caminos mínimos utilizados en las siguientes métricas
-    static std::map<TipoVertice, TipoPeso> dijkstraDistancias(const Grafo<TipoVertice, TipoPeso>& g, const TipoVertice& inicio) {
-        std::map<TipoVertice, TipoPeso> distancias;
+    static std::unordered_map<TipoVertice, TipoPeso> dijkstraDistancias(const Grafo<TipoVertice, TipoPeso>& g, const TipoVertice& inicio) {
+        std::unordered_map<TipoVertice, TipoPeso> distancias;
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
 
-	// Se asigna distancia infinita a todos los nodos
+        // Se asigna distancia infinita a todos los nodos
         for (const auto& v : g.getVertices()) {
             distancias[v] = INFINITO;
         }
 
-	// Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
+        // Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
         std::priority_queue<
             std::pair<TipoPeso, TipoVertice>, 
             std::vector<std::pair<TipoPeso, TipoVertice>>, 
@@ -58,21 +127,18 @@ public:
         distancias[inicio] = 0;
         pq.push({0, inicio});
 
-	
-	// Bucle principal del algoritmo 
+        // Bucle principal del algoritmo 
         while (!pq.empty()) {
-	  // Selecciona el nodo con la menor distancia dentro de la cola
+            // Selecciona el nodo con la menor distancia dentro de la cola
             TipoPeso distActual = pq.top().first;
             TipoVertice u = pq.top().second;
             pq.pop();
-
+            
             if (distActual > distancias[u]) continue;
-
-	    // Actualiza las distancias de los veciones del nodo, comprobando que sea menor a la ya tiene registrada
+            // Actualiza las distancias de los veciones del nodo, comprobando que sea menor a la ya tiene registrada
             for (const auto& arista : g.aristaIncidentes(u)) {
                 TipoVertice v = arista.destino;
                 TipoPeso pesoArista = arista.peso;
-
                 if (distancias[u] + pesoArista < distancias[v]) {
                     distancias[v] = distancias[u] + pesoArista;
                     pq.push({distancias[v], v});
@@ -81,40 +147,44 @@ public:
         }
         return distancias;
     }
-
+	
     // Closeness Centrality. Retorna un mapa con la importancia de cada nodo en función de su cercanía con los demás nodos del mapa
     static std::map<TipoVertice, double> centralidadCercania(const Grafo<TipoVertice, TipoPeso>& g) {
         std::map<TipoVertice, double> closeness;
         auto vertices = g.getVertices();
         int V = vertices.size();
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
-
-	// Ciclo para iterar sobre todos los vértices
+        int cont = 0;
+        
+        // Ciclo para iterar sobre todos los vértices
         for (const auto& v : vertices) {
-	  // Aplica el algoritmo de Dijkstra sobre el nodo para acceder a su distancia hacia todos los demás 
+            // Aplica el algoritmo de Dijkstra sobre el nodo para acceder a su distancia hacia todos los demás
             auto distancias = dijkstraDistancias(g, v);
             double sumaDistancias = 0;
             bool alcanzableTodo = true;
-
-	    // Itera para sumar las distancias obtenidas
+            
+            // Itera para sumar las distancias obtenidas
             for (const auto& u : vertices) {
                 if (u == v) continue;
-		// Si un nodo no fue alcanzado (Distancia infinita) rompe el ciclo
-                if (distancias[u] == INFINITO) {
+                // Si un nodo no fue alcanzado (Distancia infinita) rompe el ciclo
+                // Búsqueda en O(1)
+                auto it = distancias.find(u);
+                if (it == distancias.end() || it->second == INFINITO) {
                     alcanzableTodo = false; 
                     break;
                 }
-     
+         
                 sumaDistancias += static_cast<double>(distancias[u]);
             }
 
-	    // Verifica que el vértice alcance a todos los demás, si no lo hace, esta métrica asigna un valor 0 de importancia a ese nodo
+            // Verifica que el vértice alcance a todos los demás, si no lo hace, esta métrica asigna un valor 0 de importancia a ese nodo
             if (alcanzableTodo && sumaDistancias > 0) {
-	      // Asigna al vértice su valor de importancia, utilizando la fórmula normalizada
+                // Asigna al vértice su valor de importancia, utilizando la fórmula normalizada
                 closeness[v] = static_cast<double>(V - 1) / sumaDistancias;
             } else {
-                closeness[v] = 0.0;
+                closeness[v] = -1.0;
             }
+            cont++;
         }
         return closeness;
     }
@@ -126,343 +196,258 @@ public:
         int V = vertices.size();
         TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
 
-	// Ciclo para iterar sobre todos los vértices
+        // Ciclo para iterar sobre todos los vértices
         for (const auto& v : vertices) {
-	  // Aplica el algoritmo de Dijkstra sobre el nodo para acceder a su distancia hacia todos los demás 
+            // Aplica el algoritmo de Dijkstra sobre el nodo para acceder a su distancia hacia todos los demás 
             auto distancias = dijkstraDistancias(g, v);
             double sumaInversa = 0.0;
 
-	    // Itera para sumar las distancias obtenidas
+            // Itera para sumar las distancias obtenidas
             for (const auto& u : vertices) {
                 if (u == v) continue;
-		// Si un nodo no fue alcanzado, es ignorado (suma 0), a diferencia de la centralidad por cercanía
-                if (distancias[u] != INFINITO) {
-		  sumaInversa += 1.0 / static_cast<double>(distancias[u]);
-		}
+                // Si un nodo no fue alcanzado, es ignorado (suma 0), a diferencia de la centralidad por cercanía
+                auto it = distancias.find(u);
+                if (it != distancias.end() && it->second != INFINITO) {
+                    sumaInversa += 1.0 / static_cast<double>(it->second);
+                }
             }
 
-	    // Registra el valor aplicando la fórmula normalizada
-	    harmonic[v] = sumaInversa / static_cast<double>(V-1);
+            // Registra el valor aplicando la fórmula normalizada
+            harmonic[v] = sumaInversa / static_cast<double>(V - 1);
         }
         return harmonic;
     }
 
     // Average Shortest Path. Retorna el valor promedio de los caminos más cortos del grafo
-    static double caminoPromedio (const Grafo<TipoVertice, TipoPeso>& g){
-      auto vertices = g.getVertices();
-      int V = vertices.size();
+    static double caminoPromedio(const Grafo<TipoVertice, TipoPeso>& g){
+        auto vertices = g.getVertices();
+        int V = vertices.size();
 
-      if (V <= 1) return 0.0; 
-      
-      double sumaDistancias = 0.0;
-      TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
-      
-      // Recorremos cada vértice como origen
-      for (const auto& v : vertices) {
-        auto distancias = dijkstraDistancias(g, v);
-	
-        // Recorremos cada vértice como destino
-        for (const auto& u : vertices) {
-	  if (u == v) continue;
-	  
-	  // Si un nodo no fue alcanzado, la métrica arroja un valor inválido
-	  if (distancias[u] == INFINITO) {
-	    return -1.0; 
+        if (V <= 1) return 0.0; 
+        
+        double sumaDistancias = 0.0;
+        TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
+        
+        // Recorremos cada vértice como origen
+        for (const auto& v : vertices) {
+            auto distancias = dijkstraDistancias(g, v);
+            
+            // Recorremos cada vértice como destino
+            for (const auto& u : vertices) {
+                if (u == v) continue;
+                
+                auto it = distancias.find(u);
+                if (it == distancias.end() || it->second == INFINITO) {
+                    return -1;
+                }
+                
+                sumaDistancias += static_cast<double>(distancias[u]);
+            }
+        }
+        
+        // Aplica la fórmula de la métrica
+        return sumaDistancias / static_cast<double>(V * (V - 1));
+    }
+
+    // Betweenness Centrality. Retorna un mapa con la importancia de cada nodo en función de su rol como puente en los caminos más cortos del grafo
+    static std::map<TipoVertice, double> centralidadIntermediacion(const Grafo<TipoVertice, TipoPeso>& g) {
+        std::map<TipoVertice, double> betweenness;
+        auto vertices = g.getVertices();
+        int V = vertices.size();
+
+        // Inicializa el valor de intermediación de todos los vértices en 0.0
+        for (const auto& v : vertices) {
+            betweenness[v] = 0.0;
+        }
+        
+        // Ciclo para iterar sobre todos los vértices 
+        for (const auto& s : vertices) {
+            
+            // Estructuras locales para almacenar los datos del camino desde el origen 's'
+            std::vector<TipoVertice> S; 
+            std::unordered_map<TipoVertice, std::vector<TipoVertice>> predecesores; 
+            std::unordered_map<TipoVertice, int> sigma; // Almacena la cantidad de caminos más cortos que pasan por s
+            std::unordered_map<TipoVertice, TipoPeso> distancias; 
+            
+            // Llamada a la función auxiliar común basada en el algoritmo de Brandes
+            calcularDependenciasBrandes(g, s, S, predecesores, sigma, distancias);
+          
+            // Estructura local para acumular la dependencia de los caminos en reversa
+            std::unordered_map<TipoVertice, double> delta;
+            for (const auto& v : vertices) delta[v] = 0.0;
+          
+            // Recorremos la lista S de atrás hacia adelante (Desde los más lejanos a los más cercanos)
+            while (!S.empty()) {
+                TipoVertice w = S.back();
+                S.pop_back();
+                
+                // Aplica la fórmula acumulativa sobre los predecesores del nodo
+                for (const auto& v : predecesores[w]) {
+                    delta[v] += (static_cast<double>(sigma[v]) / sigma[w]) * (1.0 + delta[w]);
+                }
+                
+                // Si el nodo actual no es el origen, acumula su valor al score global de intermediación
+                if (w != s) {
+                    betweenness[w] += delta[w];
+                }
+            }
+        }
+        
+	// Aplica la fórmula de normalización estándar dividiendo entre los pares totales posibles del grafo, ya sea para digrafo o no dirigido
+        if (g.esDirigido() && V > 2) {
+            double factorNormalizacion = (static_cast<double>(V - 1) * (V - 2));
+            for (const auto& v : vertices) {
+                betweenness[v] = (betweenness[v] / factorNormalizacion);
+            }
+        }
+	else if (V > 2){
+	  double factorNormalizacion = (static_cast<double>(V - 1) * (V - 2));
+            for (const auto& v : vertices) {
+                betweenness[v] = 2 * (betweenness[v] / factorNormalizacion);
+            }
+	}
+        
+        return betweenness;
+    }
+
+    // Percolation Centrality. Determina la importancia de cada nodo en función de la propagación de un estado o infección a través de los caminos más cortos
+    static std::map<TipoVertice, double> centralidadPercolacion(const Grafo<TipoVertice, TipoPeso>& g, const std::unordered_map<TipoVertice, double>& estados) {
+        std::map<TipoVertice, double> percolation;
+        auto vertices = g.getVertices();
+        int V = vertices.size();
+        
+        // Inicializa el valor de percolación de todos los vértices en 0.0
+        for (const auto& v : vertices) {
+            percolation[v] = 0.0;
+        }
+        
+        // Ciclo para evaluar la sumatoria total del denominador de la fórmula
+        double sumaTotalEstados = 0.0;
+        for (const auto& v : vertices) {
+            // Buscamos el estado del vértice, si no existe asumimos 0.0
+            auto itEstado = estados.find(v);
+            double estadoV = (itEstado != estados.end()) ? itEstado->second : 0.0;
+            sumaTotalEstados += estadoV;
+        }
+        
+        // Ciclo para iterar sobre todos los vértices como origen (s)
+        for (const auto& s : vertices) {
+          
+            // Obtenemos el estado de percolación del nodo origen actual
+            auto itEstadoS = estados.find(s);
+            double estadoS = (itEstadoS != estados.end()) ? itEstadoS->second : 0.0;
+          
+            // Estructuras locales para almacenar los datos del camino desde el origen 's'
+            std::vector<TipoVertice> S; 
+            std::unordered_map<TipoVertice, std::vector<TipoVertice>> predecesores; 
+            std::unordered_map<TipoVertice, int> sigma; 
+            std::unordered_map<TipoVertice, TipoPeso> distancias; 
+          
+            // Llamada a la función auxiliar común basada en el algoritmo de Brandes
+            calcularDependenciasBrandes(g, s, S, predecesores, sigma, distancias);
+          
+            // Estructura local para acumular la dependencia de los caminos en reversa (Algoritmo de Brandes modificado para percolación)
+            std::unordered_map<TipoVertice, double> delta;
+            for (const auto& v : vertices) delta[v] = 0.0;
+          
+            // Recorremos la lista S de atrás hacia adelante (Desde los más lejanos a los más cercanos)
+            while (!S.empty()) {
+                TipoVertice w = S.back();
+                S.pop_back();
+                
+                // Aplica la fórmula acumulativa incorporando el estado del origen ponderado por el estado de la red
+                for (const auto& v : predecesores[w]) {
+                    double factorPercolacion = 0.0;
+                    
+                    // Buscamos de forma segura en el mapa de estados para evitar excepciones .at()
+                    auto itEstadoW = estados.find(w);
+                    double estadoW = (itEstadoW != estados.end()) ? itEstadoW->second : 0.0;
+                    double denominador = sumaTotalEstados - estadoW;
+                  
+                    if (denominador > 0.0) {
+                        factorPercolacion = estadoS / denominador;
+                    }
+                  
+                    delta[v] += (static_cast<double>(sigma[v]) / sigma[w]) * (1.0 + delta[w]) * factorPercolacion;
+                }
+                
+                // Si el nodo actual no es el origen, acumula su valor al score global de percolación
+                if (w != s) {
+                    percolation[w] += delta[w];
+                }
+            }
+        }
+        
+        // Aplica la fórmula de normalización estándar dividiendo entre los pares totales posibles del grafo, ya sea para digrafo o no dirigido
+        if (g.esDirigido() && V > 2) {
+            double factorNormalizacion = static_cast<double>((V - 1) * (V - 2));
+            for (const auto& v : vertices) {
+                percolation[v] = percolation[v] / factorNormalizacion;
+            }
+        }
+	else if (V > 2){
+	  double factorNormalizacion = static_cast<double>((V - 1) * (V - 2));
+            for (const auto& v : vertices) {
+                percolation[v] = 2 * percolation[v] / factorNormalizacion;
             }
 	  
-	  sumaDistancias += static_cast<double>(distancias[u]);
-        }
-      }
-      
-      // Aplica la fórmula de la métrica
-      return sumaDistancias / static_cast<double>(V * (V - 1));
-    }
-    // Betweenness Centrality. Retorna un mapa con la importancia de cada nodo en función de su rol como puente en los caminos más cortos del grafo
-  static std::map<TipoVertice, double> centralidadIntermediacion(const Grafo<TipoVertice, TipoPeso>& g) {
-    std::map<TipoVertice, double> betweenness;
-    auto vertices = g.getVertices();
-    int V = vertices.size();
-    TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
-
-    // Inicializa el valor de intermediación de todos los vértices en 0.0
-    for (const auto& v : vertices) {
-      betweenness[v] = 0.0;
-    }
-    
-    // Ciclo para iterar sobre todos los vértices 
-    for (const auto& s : vertices) {
-      
-      // Estructuras locales para almacenar los datos del camino desde el origen 's'
-      std::vector<TipoVertice> S; 
-      std::map<TipoVertice, std::vector<TipoVertice>> predecesores; 
-      std::map<TipoVertice, int> sigma; // Almacena la cantidad de caminos más cortos que pasan por s
-      std::map<TipoVertice, TipoPeso> distancias; 
-      
-      // Se asigna distancia infinita y 0 caminos a todos los nodos
-      for (const auto& v : vertices) {
-	sigma[v] = 0;
-	distancias[v] = INFINITO;
-      }
-      
-      // Inicializa el nodo de partida
-      distancias[s] = 0;
-      sigma[s] = 1;
-      
-      // Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
-      std::priority_queue<
-	std::pair<TipoPeso, TipoVertice>, 
-	std::vector<std::pair<TipoPeso, TipoVertice>>, 
-	ComparadorDijkstra
-	> pq;
-      pq.push({0, s});
-      
-      // Bucle principal para el cálculo de caminos mínimos
-      while (!pq.empty()) {
-	// Selecciona el nodo con la menor distancia dentro de la cola
-	TipoPeso distActual = pq.top().first;
-	TipoVertice u = pq.top().second;
-	pq.pop();
-	
-	if (distActual > distancias[u]) continue;
-        
-	// Guarda el vértice en la lista para el proceso de acumulación posterior
-	S.push_back(u);
-	
-	// Actualiza las distancias de los vecinos del nodo, comprobando que sea menor a la ya tiene registrada
-	for (const auto& arista : g.aristaIncidentes(u)) {
-	  TipoVertice v = arista.destino;
-	  TipoPeso pesoArista = arista.peso;
-	  
-	  // Encuentra una ruta más corta hacia el destino 'v'
-	  if (distancias[u] + pesoArista < distancias[v]) {
-	    distancias[v] = distancias[u] + pesoArista;
-	    pq.push({distancias[v], v});
-            
-	    // Reinicia los predecesores conocidos y hereda la cantidad de caminos de 'u'
-	    predecesores[v].clear();
-	    predecesores[v].push_back(u);
-	    sigma[v] = sigma[u];
-	  }
-	  // Encuentra un camino alternativo que empata en costo con la distancia registrada
-	  else if (distancias[u] + pesoArista == distancias[v]) {
-	    predecesores[v].push_back(u);
-	    sigma[v] += sigma[u]; 
-	  }
-	}
-      }
-      
-      // Estructura local para acumular la dependencia de los caminos en reversa
-      std::map<TipoVertice, double> delta;
-      for (const auto& v : vertices) delta[v] = 0.0;
-      
-      // Recorremos la lista S de atrás hacia adelante (Desde los más lejanos a los más cercanos)
-      while (!S.empty()) {
-	TipoVertice w = S.back();
-	S.pop_back();
-	
-	// Aplica la fórmula acumulativa sobre los predecesores del nodo
-	for (const auto& v : predecesores[w]) {
-	  delta[v] += (static_cast<double>(sigma[v]) / sigma[w]) * (1.0 + delta[w]);
 	}
         
-	// Si el nodo actual no es el origen, acumula su valor al score global de intermediación
-	if (w != s) {
-	  betweenness[w] += delta[w];
-	}
-      }
+        return percolation;
     }
-    
-    // Aplica la fórmula de normalización en caso de que el grafo sea no dirigido
-    if (!g.esDirigido() && V > 2) {
-      double factorNormalizacion = (static_cast<double>(V - 1) * (V - 2));
-      for (const auto& v : vertices) {
-	betweenness[v] = (betweenness[v] / factorNormalizacion);
-      }
-    }
-    
-    return betweenness;
-  }
-
-  // Percolation Centrality. Determina la importancia de cada nodo en función de la propagación de un estado o infección a través de los caminos más cortos
-  static std::map<TipoVertice, double> centralidadPercolacion(const Grafo<TipoVertice, TipoPeso>& g, const std::map<TipoVertice, double>& estados) {
-    std::map<TipoVertice, double> percolation;
-    auto vertices = g.getVertices();
-    int V = vertices.size();
-    TipoPeso INFINITO = std::numeric_limits<TipoPeso>::max();
-    
-    // Inicializa el valor de percolación de todos los vértices en 0.0
-    for (const auto& v : vertices) {
-      percolation[v] = 0.0;
-    }
-    
-    // Ciclo para evaluar la sumatoria total del denominador de la fórmula
-    double sumaTotalEstados = 0.0;
-    for (const auto& v : vertices) {
-      // Buscamos el estado del vértice, si no existe asumimos 0.0
-      auto itEstado = estados.find(v);
-      double estadoV = (itEstado != estados.end()) ? itEstado->second : 0.0;
-            sumaTotalEstados += estadoV;
-    }
-    
-    // Ciclo para iterar sobre todos los vértices como origen (s)
-    for (const auto& s : vertices) {
-      
-      // Obtenemos el estado de percolación del nodo origen actual
-      auto itEstadoS = estados.find(s);
-      double estadoS = (itEstadoS != estados.end()) ? itEstadoS->second : 0.0;
-      
-      // Estructuras locales para almacenar los datos del camino desde el origen 's'
-      std::vector<TipoVertice> S; 
-      std::map<TipoVertice, std::vector<TipoVertice>> predecesores; 
-      std::map<TipoVertice, int> sigma; 
-      std::map<TipoVertice, TipoPeso> distancias; 
-      
-      // Se asigna distancia infinita y 0 caminos a todos los nodos
-      for (const auto& v : vertices) {
-	sigma[v] = 0;
-	distancias[v] = INFINITO;
-      }
-      
-      // Inicializa el nodo de partida
-      distancias[s] = 0;
-      sigma[s] = 1;
-      
-      // Se crea la cola de prioridad, utilizando la estructura auxiliar como comparador
-      std::priority_queue<
-	std::pair<TipoPeso, TipoVertice>, 
-	std::vector<std::pair<TipoPeso, TipoVertice>>, 
-	ComparadorDijkstra
-	> pq;
-      pq.push({0, s});
-      
-      // Bucle principal para el cálculo de caminos mínimos
-      while (!pq.empty()) {
-	// Selecciona el nodo con la menor distancia dentro de la cola
-	TipoPeso distActual = pq.top().first;
-	TipoVertice u = pq.top().second;
-	pq.pop();
-	
-	if (distActual > distancias[u]) continue;
-        
-	// Guarda el vértice en la lista para el proceso de acumulación posterior
-	S.push_back(u);
-	
-	// Actualiza las distancias de los vecinos del nodo, comprobando que sea menor a la ya tiene registrada
-	for (const auto& arista : g.aristaIncidentes(u)) {
-	  TipoVertice v = arista.destino;
-	  TipoPeso pesoArista = arista.peso;
-	  
-	  // Encuentra una ruta más corta hacia el destino 'v'
-	  if (distancias[u] + pesoArista < distancias[v]) {
-	    distancias[v] = distancias[u] + pesoArista;
-	    pq.push({distancias[v], v});
-            
-	    // Reinicia los predecesores conocidos y hereda la cantidad de caminos de 'u'
-	    predecesores[v].clear();
-	    predecesores[v].push_back(u);
-	    sigma[v] = sigma[u];
-	  }
-	  // Encontra un camino alternativo que empata en costo con la distancia registrada
-	  else if (distancias[u] + pesoArista == distancias[v]) {
-	    predecesores[v].push_back(u);
-	    sigma[v] += sigma[u]; 
-	  }
-	}
-      }
-      
-      // Estructura local para acumular la dependencia de los caminos en reversa (Algoritmo de Brandes modificado para percolación)
-      std::map<TipoVertice, double> delta;
-      for (const auto& v : vertices) delta[v] = 0.0;
-      
-      // Recorremos la lista S de atrás hacia adelante (Desde los más lejanos a los más cercanos)
-      while (!S.empty()) {
-	TipoVertice w = S.back();
-	S.pop_back();
-	
-	// Aplica la fórmula acumulativa incorporando el estado del origen ponderado por el estado de la red
-	for (const auto& v : predecesores[w]) {
-	  double factorPercolacion = 0.0;
-	  double denominador = sumaTotalEstados - estados.at(w);
-          
-	  if (denominador > 0.0) {
-	    factorPercolacion = estadoS / denominador;
-	  }
-	  
-	  delta[v] += (static_cast<double>(sigma[v]) / sigma[w]) * (1.0 + delta[w]) * factorPercolacion;
-	}
-        
-	// Si el nodo actual no es el origen, acumula su valor al score global de percolación
-	if (w != s) {
-	  percolation[w] += delta[w];
-	}
-      }
-    }
-    
-    // Aplica la fórmula de normalización estándar dividiendo entre los pares totales posibles del grafo
-    if (V > 2) {
-      double factorNormalizacion = static_cast<double>((V - 1) * (V - 2));
-      for (const auto& v : vertices) {
-	percolation[v] = percolation[v] / factorNormalizacion;
-      }
-    }
-    
-    return percolation;
-  }
   
-  // PageRank. Determina la importancia de los vértices por la relevancia de sus enlaces entrantes.
-  // Se ejecuta de forma iterativa por un número fijo de pasos 
-  static std::map<TipoVertice, double> pageRank(const Grafo<TipoVertice, TipoPeso>& g, int iteraciones = 30) {
-    std::map<TipoVertice, double> pr;
-    auto vertices = g.getVertices();
-    int N = vertices.size();
-    
-    if (N == 0) return pr;
-    
-    // Todos los nodos empiezan con el mismo valor (1 / N)
-    double valorInicial = 1.0 / static_cast<double>(N);
-    for (const auto& v : vertices) {
-        pr[v] = valorInicial;
+    // PageRank. Determina la importancia de los vértices por la relevancia de sus enlaces entrantes.
+    // Se ejecuta de forma iterativa por un número fijo de pasos 
+    static std::map<TipoVertice, double> pageRank(const Grafo<TipoVertice, TipoPeso>& g, int iteraciones = 30) {
+        std::map<TipoVertice, double> pr;
+        auto vertices = g.getVertices();
+        int N = vertices.size();
+        
+        if (N == 0) return pr;
+        
+        // Todos los nodos empiezan con el mismo valor (1 / N)
+        double valorInicial = 1.0 / static_cast<double>(N);
+        for (const auto& v : vertices) {
+            pr[v] = valorInicial;
+        }
+        
+        double factorD = 0.85;
+        
+        // Bucle de iteraciones
+        for (int i = 0; i < iteraciones; ++i) {
+            std::map<TipoVertice, double> nuevoPr;
+          
+            // Inicialización de factor de atenuación para cada nodo
+            for (const auto& v : vertices) {
+                nuevoPr[v] = (1.0 - factorD) / static_cast<double>(N);
+            }
+          
+            // Se reparte el PageRank actual de cada nodo hacia sus vecinos
+            for (const auto& u : vertices) {
+                auto vecinos = g.getVecinos(u);
+                int outGrado = vecinos.size();
+                
+                if (outGrado > 0) {
+                    // El nodo 'u' distribuye equitativamente su PageRank entre sus vecinos salientes
+                    double prPorVecino = (factorD * pr[u]) / static_cast<double>(outGrado);
+                    for (const auto& v : vecinos) {
+                        nuevoPr[v] += prPorVecino;
+                    }
+                } else {
+                    // Si 'u' no tiene salidas, su PageRank se reparte a TODOS los nodos por igual
+                    double prPorTodos = (factorD * pr[u]) / static_cast<double>(N);
+                    for (const auto& v : vertices) {
+                        nuevoPr[v] += prPorTodos;
+                    }
+                }
+            }
+          
+            // Se actualiza el mapa principal con los resultados de cada iteración
+            pr = nuevoPr;
+        }
+        
+        return pr;
     }
-    
-    double factorD = 0.85;
-    
-    // Bucle de iteraciones
-    for (int i = 0; i < iteraciones; ++i) {
-      std::map<TipoVertice, double> nuevoPr;
-      
-      // Inicialización de factor de atenuación para cada nodo
-      for (const auto& v : vertices) {
-	nuevoPr[v] = (1.0 - factorD) / static_cast<double>(N);
-      }
-      
-      // Se reparte el PageRank actual de cada nodo hacia sus vecinos
-      for (const auto& u : vertices) {
-	auto vecinos = g.getVecinos(u);
-	int outGrado = vecinos.size();
-	
-	if (outGrado > 0) {
-	  // El nodo 'u' distribuye equitativamente su PageRank entre sus vecinos salientes
-	  double prPorVecino = (factorD * pr[u]) / static_cast<double>(outGrado);
-	  for (const auto& v : vecinos) {
-                    nuevoPr[v] += prPorVecino;
-	  }
-	} else {
-	  // Si 'u' no tiene salidas, su PageRank se reparte a TODOS los nodos por igual
-	  double prPorTodos = (factorD * pr[u]) / static_cast<double>(N);
-	  for (const auto& v : vertices) {
-	    nuevoPr[v] += prPorTodos;
-	  }
-	}
-      }
-      
-      // Se actualiza el mapa principal con los resultados de cada iteración
-      pr = nuevoPr;
-    }
-    
-    return pr;
-  }
-
-    
 };
 
 #endif

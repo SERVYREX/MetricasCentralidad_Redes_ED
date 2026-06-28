@@ -5,6 +5,8 @@
 #include <map>
 #include <algorithm>
 #include <stdexcept>
+#include <cstdlib>
+#include <unordered_map>
 //Usamos templates para generalizar nuestra implementacion
 
 //Estructura arista
@@ -51,7 +53,7 @@ public:
   virtual std::vector<Arista<TipoVertice, TipoPeso>> getAristas() const = 0;
   //Para grafos no dirigidos
   virtual int getGrado(const TipoVertice& v) const = 0;
-
+  virtual std::unordered_map<TipoVertice,double> getEstados() const = 0;
   //Para grafos dirigidos
   virtual int getInGrado(const TipoVertice& v) const = 0;
   virtual int getOutGrado(const TipoVertice& v) const = 0;
@@ -67,6 +69,7 @@ private:
   bool dirigido;
   int numAristas = 0;
   std::map<TipoVertice, std::vector<Arista<TipoVertice,TipoPeso>>> listaAdyacencia;
+  std::unordered_map<TipoVertice, double> estados; // Mapa que permite verificar el estado de un nodo para la metrica de percolación
 
 public:
   GrafoAdList(bool esDirigido = false){
@@ -77,12 +80,15 @@ public:
   }
 
   void addVertice(const TipoVertice& v) override {
-    //Comprobamos que el vertice a insertar no este en el grafo, en caso de no estar, lo insertamos
-    if(listaAdyacencia.find(v) == listaAdyacencia.end()) {
-      listaAdyacencia.insert({v , std::vector<Arista<TipoVertice, TipoPeso>>()
-	});
+        // Comprobamos que el vértice a insertar no esté en el grafo
+        if (listaAdyacencia.find(v) == listaAdyacencia.end()) {
+            listaAdyacencia.insert({v, std::vector<Arista<TipoVertice, TipoPeso>>()});
+            
+            // Cada vez que se añade un vértice, se le asigna un estado aleatorio entre 0.0 y 1.0
+            double estadoAleatorio = static_cast<double>(rand()) / RAND_MAX;
+            estados[v] = estadoAleatorio;
+        }
     }
-  }
 
   void removeVertice(const TipoVertice& v) override {
     //Si el vertice no se encuentra en el grafo, no hacemos nada
@@ -111,6 +117,8 @@ public:
       numAristas -= it->second.size();
     }
     listaAdyacencia.erase(it);
+
+    estados.erase(v);
   }
 
   //Dos formas de eliminar aristas segun el contexto
@@ -268,6 +276,10 @@ public:
       }
     }
     return aristas;
+  }
+
+  std::unordered_map<TipoVertice,double> getEstados() const override{
+    return estados;
   }
 
   //Comprobamos que el vertice exista y devolvemos el tamaño de la lista asociada a v
