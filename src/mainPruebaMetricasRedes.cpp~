@@ -1,0 +1,42 @@
+#include <iostream>
+#include "../include/leerDataSet.h"
+#include "../include/Metricas.h"
+using namespace std;
+
+void showInformation(const std::map<string,float>& mapa, string tipoMetrica){
+  for(const auto& par : mapa){
+    cout << "Nodo: " << par.first <<", " tipoMetrica << par.second <<endl;
+}
+
+
+int main(){
+  //Varibles y mapas para los resultados
+  double ASPathResult;
+  map<string,double> degreeResult;
+  map<string,double> closenessResult;
+  map<string,double> harmonicResult;
+  map<string,double> betweennessResult;
+  map<string,double> percolationResult;
+  map<string,double> pagerankResult;
+
+  //Instancias de grafos
+  GrafoProteinas grafoProteinas;
+  GrafoRedes grafoRedes;
+
+  //Lectura de datasets
+  grafoProteinas.leerArchivoProteinas();
+  grafoRedes.leerArchivoRedes();
+
+  //Metricas para GrafoRedes
+  degreeResult = centralidadGrado(grafoRedes);
+  closenessResult = cantralidadCercania(grafoRedes);
+  harmonicResult = centralidadArmonica(grafoRedes);
+  ASPashResult = caminoPromedio(grafoRedes);
+  betweennessResult = centralidadIntermediacion(grafoRedes);
+  percolationResult = centralidadPercolacion(grafoRedes);
+  pagerankResult = pageRank(grafoRedes);
+
+  // Mostramos los resultados de las metricas
+  
+  
+  
