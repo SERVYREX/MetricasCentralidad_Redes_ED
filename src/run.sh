@@ -7,7 +7,7 @@ EXPERIMENTO=0 # Cambia este valor a 0 o 1 según el experimento que desees ejecu
 # 1. Definimos la ruta de la carpeta de destino
 RUTA_DESTINO="../Resultados_Tiempos_Ejecucion"
 
-# 2. Creamos la carpeta si no existe (-p evita errores)
+# 2. Creamos la carpeta si no existe 
 mkdir -p "$RUTA_DESTINO"
 
 # 3. Archivos de salida dinámicos concatenando la ruta y el tipo de experimento
