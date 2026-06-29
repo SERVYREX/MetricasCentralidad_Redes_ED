@@ -1,43 +1,56 @@
-# MetricasCentralidad_Redes_ED
+# Análisis de Redes mediante Métricas de Centralidad
+
+<p align="center">
+
+![C++](https://img.shields.io/badge/C++-g%2B%2B-blue)
+![Graphs](https://img.shields.io/badge/Data%20Structures-Adjacency%20Lists-green)
+![Academic](https://img.shields.io/badge/Purpose-Academic-red)
+
+</p>
+
+---
 
 ## Descripción
 
-Este proyecto implementa un conjunto de algoritmos para el análisis de redes utilizando distintas **métricas de centralidad** sobre grafos y digrafos representados mediante **listas de adyacencia**.
+Este proyecto implementa un conjunto de algoritmos para el análisis de redes mediante métricas de centralidad utilizando un **TDA Grafo basado en listas de adyacencia**.
 
-Se trabaja sobre dos conjuntos de datos distintos:
+Se analizan dos conjuntos de datos:
 
-* Una red de interacción entre proteínas de levadura, modelada como un **grafo no dirigido**.
-* Una red de conexiones entre direcciones IP, modelada como un **digrafo ponderado**.
+| Dataset | Estructura | Peso |
+|---------|------------|------|
+| Interacción de proteínas | Grafo no dirigido | 1 |
+| Conexiones IP | Digrafo dirigido | Tiempo de conexión |
 
-Además del cálculo de las métricas, el proyecto incorpora experimentos que permiten modificar la estructura de los grafos mediante la eliminación o incorporación de aristas, evaluando posteriormente el impacto de dichas modificaciones tanto en los valores de las métricas como en sus tiempos de ejecución.
-
----
-
-# Objetivos
-
-* Implementar un TDA Grafo utilizando listas de adyacencia.
-* Implementar distintas métricas de análisis de redes.
-* Analizar el comportamiento de dichas métricas sobre redes reales.
-* Evaluar el efecto de modificar la estructura del grafo mediante distintos experimentos.
-* Medir y comparar los tiempos de ejecución de cada algoritmo.
+Además del cálculo de las métricas, el proyecto incorpora experimentos para modificar la estructura de la red y estudiar el efecto sobre las métricas y los tiempos de ejecución.
 
 ---
 
-# Métricas implementadas
+## Contenido
 
-El proyecto implementa las siguientes métricas:
-
-* Degree Centrality
-* Betweenness Centrality
-* Closeness Centrality
-* Harmonic Centrality
-* PageRank
-* Average Shortest Path
-* Percolation Centrality
+1. Objetivos
+2. Estructura del proyecto
+3. Datasets
+4. Implementación
+5. Métricas implementadas
+6. Compilación
+7. Configuración de experimentos
+8. Ejecución
+9. Resultados
+10. Autores
 
 ---
 
-# Estructura del proyecto
+## Objetivos
+
+- Implementar un TDA Grafo mediante listas de adyacencia.
+- Implementar métricas clásicas de análisis de redes.
+- Analizar dos conjuntos de datos reales.
+- Comparar el comportamiento de las métricas antes y después de modificar la estructura del grafo.
+- Registrar tiempos de ejecución.
+
+---
+
+## Estructura del proyecto
 
 ```text
 Proyecto/
@@ -51,285 +64,136 @@ Proyecto/
 └── src/
 ```
 
----
+| Carpeta | Descripción |
+|----------|-------------|
+| `DATA/` | Contiene los datasets utilizados. |
+| `include/` | Cabeceras del proyecto y TDA Grafo. |
+| `src/` | Programas principales y scripts de ejecución. |
+| `ResultadosP/` | Resultados del grafo de proteínas. |
+| `ResultadosPV2/` | Resultados del grafo de proteínas modificado. |
+| `ResultadosR/` | Resultados del digrafo de redes. |
+| `ResultadosRV2/` | Resultados del digrafo modificado. |
+| `Resultados_Tiempos_Ejecucion/` | Tiempos promedio de ejecución. |
 
 ## DATA
 
-Contiene los conjuntos de datos utilizados durante los experimentos.
+### Dataset de proteínas
 
-### Dataset de interacción de proteínas
+Lista de interacciones entre proteínas de levadura. Se modela como un **grafo no dirigido** con peso unitario.
 
-Corresponde a una lista de interacciones entre proteínas de levadura.
+### Dataset de redes
 
-Cada línea representa una interacción entre dos proteínas, por lo que el conjunto de datos se modela como un:
-
-* Grafo no dirigido.
-* Peso unitario para todas las aristas (peso = 1).
-
----
-
-### Dataset de conexiones IP
-
-Corresponde a una lista de conexiones entre direcciones IP.
-
-Cada línea representa una conexión desde una IP origen hacia una IP destino junto con el tiempo asociado a dicha conexión.
-
-Este conjunto de datos se modela como un:
-
-* Digrafo dirigido.
-* Peso igual al tiempo de conexión registrado.
-
----
+Lista de conexiones entre direcciones IP. Se modela como un **digrafo ponderado**, donde el peso corresponde al tiempo de conexión.
 
 ## include
 
-Contiene los archivos de cabecera del proyecto.
+| Archivo | Descripción |
+|---------|-------------|
+| `GrafoADT.h` | Implementación del TDA Grafo mediante listas de adyacencia. |
+| `leerDataSet.h` | Lectura y construcción de grafos desde los datasets. |
+| `Metricas.h` | Implementación de las métricas de centralidad. |
+| `metricasUtils.h` | Funciones auxiliares para agregar y eliminar aristas, entre otras utilidades. |
 
-### GrafoADT.h
+### Complejidad del TDA Grafo
 
-Implementa el TDA Grafo mediante listas de adyacencia.
+| Operación | Complejidad |
+|-----------|-------------|
+| Agregar vértice | O(1) |
+| Agregar arista | O(1) |
+| Eliminar arista | O(grado(v)) |
+| Eliminar vértice | O(V+E) |
+| Obtener vecinos | O(grado(v)) |
+| Recorrer el grafo | O(V+E) |
 
-Las operaciones principales presentan las siguientes complejidades temporales:
+## Métricas implementadas
 
-| Operación         | Complejidad   |
-| ----------------- | ------------- |
-| Agregar vértice   | O(1) promedio |
-| Agregar arista    | O(1) promedio |
-| Eliminar arista   | O(grado(v))   |
-| Eliminar vértice  | O(V + E)      |
-| Obtener vecinos   | O(grado(v))   |
-| Recorrer el grafo | O(V + E)      |
-
----
-
-### leerDataSet.h
-
-Contiene los métodos encargados de leer ambos conjuntos de datos y construir los grafos correspondientes.
-
----
-
-### Metricas.h
-
-Implementa los algoritmos correspondientes a las siguientes métricas:
-
-* Degree Centrality
-* Betweenness Centrality
-* Closeness Centrality
-* Harmonic Centrality
-* PageRank
-* Average Shortest Path
-* Percolation Centrality
-
----
-
-### metricasUtils.h
-
-Contiene funciones auxiliares utilizadas durante los experimentos, incluyendo operaciones para agregar o eliminar aristas y otras funciones de apoyo necesarias para modificar la estructura de los grafos.
-
----
+| Métrica | Descripción |
+|----------|-------------|
+| Degree Centrality | Importancia según el número de conexiones. |
+| Betweenness Centrality | Frecuencia con la que un nodo pertenece a caminos mínimos. |
+| Closeness Centrality | Cercanía promedio al resto de la red. |
+| Harmonic Centrality | Variante de Closeness para grafos desconectados. |
+| PageRank | Importancia iterativa de los nodos. |
+| Average Shortest Path | Longitud promedio de los caminos mínimos. |
+| Percolation Centrality | Influencia considerando procesos de propagación. |
 
 ## src
 
-Contiene los programas principales del proyecto.
+| Archivo | Descripción |
+|---------|-------------|
+| `mainPruebaMetricasProteinas.cpp` | Experimentos sobre proteínas. |
+| `mainPruebaMetricasRedes.cpp` | Experimentos sobre redes IP. |
+| `run.sh` | Automatiza los experimentos de proteínas. |
+| `run2.sh` | Automatiza los experimentos de redes. |
 
-### mainPruebaMetricasProteinas.cpp
+## Dependencias
 
-Ejecuta el cálculo de todas las métricas sobre el dataset de interacción de proteínas.
+- g++
+- Bash
 
----
+No se requieren bibliotecas externas.
 
-### mainPruebaMetricasRedes.cpp
+## Compilación
 
-Ejecuta el cálculo de todas las métricas sobre el dataset de conexiones IP.
-
----
-
-### run.sh
-
-Automatiza la ejecución de los experimentos sobre el grafo de proteínas.
-
----
-
-### run2.sh
-
-Automatiza la ejecución de los experimentos sobre el digrafo de conexiones IP.
-
----
-
-## Carpetas de resultados
-
-### ResultadosP
-
-Contiene los valores de las métricas calculadas sobre el grafo original de proteínas.
-
-Los resultados son exportados en formato CSV.
-
----
-
-### ResultadosPV2
-
-Contiene los valores obtenidos después de aplicar los experimentos sobre el grafo de proteínas.
-
-Los resultados también se almacenan en formato CSV.
-
----
-
-### ResultadosR
-
-Contiene los valores de las métricas calculadas sobre el digrafo original de conexiones IP.
-
-Los resultados se almacenan en formato CSV.
-
----
-
-### ResultadosRV2
-
-Contiene los resultados del digrafo una vez aplicadas las modificaciones correspondientes a los experimentos.
-
-Todos los resultados se exportan en formato CSV.
-
----
-
-### Resultados_Tiempos_Ejecucion
-
-Almacena los tiempos promedio de ejecución de cada una de las métricas implementadas.
-
-Cada experimento genera archivos CSV independientes para facilitar su posterior análisis.
-
----
-
-# Dependencias
-
-Para compilar y ejecutar el proyecto únicamente es necesario disponer de:
-
-* Compilador **g++**.
-* Un entorno compatible con **Bash** (Linux o Windows mediante WSL).
-
-No se requieren bibliotecas externas adicionales.
-
----
-
-# Compilación
-
-Desde la carpeta `src`, compile ambos programas mediante:
+Desde la carpeta `src`:
 
 ```bash
 g++ mainPruebaMetricasRedes.cpp -o redes
 g++ mainPruebaMetricasProteinas.cpp -o proteinas
 ```
 
-Esto generará los ejecutables:
-
-* `redes`
-* `proteinas`
-
----
-
-# Permisos de ejecución
-
-Antes de ejecutar los scripts, otorgue permisos de ejecución:
+Dar permisos de ejecución:
 
 ```bash
 chmod +x run.sh
 chmod +x run2.sh
 ```
 
-Este paso únicamente es necesario la primera vez.
+## Configuración de experimentos
 
----
-
-# Configuración de los experimentos
-
-Los scripts `run.sh` y `run2.sh` permiten configurar el número de iteraciones y el experimento que se desea ejecutar modificando las siguientes variables:
+Modificar al inicio de `run.sh` o `run2.sh`:
 
 ```bash
 ITERACIONES=30
 EXPERIMENTO=0
 ```
 
-## Número de iteraciones
+| Variable | Descripción |
+|----------|-------------|
+| `ITERACIONES` | Número de ejecuciones para calcular tiempos promedio. |
+| `EXPERIMENTO` | Experimento a realizar. |
 
-La variable `ITERACIONES` indica cuántas veces se ejecutará el programa para calcular el tiempo promedio de ejecución.
+### Experimentos
 
-Por ejemplo:
+| Valor | Descripción |
+|------:|-------------|
+| `0` | Eliminación de aristas importantes del grafo. |
+| `1` | Incorporación de aristas hacia los nodos más aislados. |
 
-```bash
-ITERACIONES=50
-```
+> **Nota:** Modifique estas variables antes de ejecutar los scripts.
 
-ejecutará cada experimento 50 veces antes de calcular los promedios.
+## Ejecución
 
----
-
-## Tipo de experimento
-
-La variable `EXPERIMENTO` controla la modificación aplicada al grafo.
-
-| Valor | Experimento                                                       |
-| :---: | ----------------------------------------------------------------- |
-| **0** | Eliminación de aristas consideradas importantes dentro del grafo. |
-| **1** | Incorporación de aristas hacia los nodos más aislados de la red.  |
-
-Por ejemplo:
-
-```bash
-EXPERIMENTO=1
-```
-
-ejecutará el experimento de incorporación de nuevas aristas.
-
----
-
-# Ejecución
-
-Una vez compilado el proyecto y configurado el experimento, ejecute:
-
-Para el conjunto de proteínas:
+Proteínas:
 
 ```bash
 ./run.sh
 ```
 
-Para el conjunto de redes:
+Redes:
 
 ```bash
 ./run2.sh
 ```
 
----
+Los scripts generan automáticamente todos los archivos CSV correspondientes a las métricas y tiempos de ejecución.
 
-# Resultados generados
+## Autores
 
-Al finalizar la ejecución se generarán automáticamente todos los archivos CSV correspondientes a:
+- Bryan Aguirre Fuentes
+- Rodolfo Rubio Reyes
+- Javier Castillo Pardo
 
-* Valores de las métricas sobre los grafos originales.
-* Valores de las métricas después de aplicar el experimento seleccionado.
-* Tiempos promedio de ejecución de cada algoritmo.
+## Uso académico
 
-Los archivos serán almacenados en las carpetas:
-
-```text
-ResultadosP/
-ResultadosPV2/
-ResultadosR/
-ResultadosRV2/
-Resultados_Tiempos_Ejecucion/
-```
-
----
-
-# Autores
-
-Este proyecto fue desarrollado por:
-
-* **Bryan Aguirre Fuentes**
-* **Rodolfo Rubio Reyes**
-* **Javier Castillo Pardo**
-
----
-
-# Uso académico
-
-Este proyecto fue desarrollado **exclusivamente con fines académicos**, como parte del estudio e implementación de algoritmos de análisis de redes mediante métricas de centralidad.
-
-Su propósito es apoyar actividades de aprendizaje, experimentación e investigación relacionadas con teoría de grafos y análisis de redes complejas.
+Este proyecto fue desarrollado exclusivamente con fines académicos para el estudio de estructuras de datos, teoría de grafos y análisis de redes mediante métricas de centralidad.
