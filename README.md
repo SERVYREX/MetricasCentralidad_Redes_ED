@@ -1,8 +1,5 @@
 # Análisis de Redes mediante Métricas de Centralidad
 
-
----
-
 ## Descripción
 
 Este proyecto implementa un conjunto de algoritmos para el análisis de redes mediante métricas de centralidad utilizando un **TDA Grafo basado en listas de adyacencia**.
