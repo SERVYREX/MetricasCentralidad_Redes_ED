@@ -74,7 +74,7 @@ Lista de conexiones entre direcciones IP. Se modela como un **digrafo ponderado*
 | `Metricas.h` | Implementación de las métricas de centralidad. |
 | `metricasUtils.h` | Funciones auxiliares para agregar y eliminar aristas, entre otras utilidades. |
 
-### Complejidad del TDA Grafo
+### Complejidad del ADT Grafo
 
 | Operación | Complejidad |
 |-----------|-------------|
