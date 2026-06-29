@@ -1,12 +1,5 @@
 # Análisis de Redes mediante Métricas de Centralidad
 
-<p align="center">
-
-![C++](https://img.shields.io/badge/C++-g%2B%2B-blue)
-![Graphs](https://img.shields.io/badge/Data%20Structures-Adjacency%20Lists-green)
-![Academic](https://img.shields.io/badge/Purpose-Academic-red)
-
-</p>
 
 ---
 
@@ -37,16 +30,6 @@ Además del cálculo de las métricas, el proyecto incorpora experimentos para m
 8. Ejecución
 9. Resultados
 10. Autores
-
----
-
-## Objetivos
-
-- Implementar un TDA Grafo mediante listas de adyacencia.
-- Implementar métricas clásicas de análisis de redes.
-- Analizar dos conjuntos de datos reales.
-- Comparar el comportamiento de las métricas antes y después de modificar la estructura del grafo.
-- Registrar tiempos de ejecución.
 
 ---
 
